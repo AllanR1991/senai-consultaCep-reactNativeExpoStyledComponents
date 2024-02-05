@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { BoxInput } from "../../components/BoxInput";
-import { ContainerForm, ScrollForm } from "./style";
+import { BoxsContainer, ContainerForm, ScrollForm } from "./style";
 import Api from "../../services/api"
 
 export function Home() {
   //Hooks - states
   const [cep, setCep] = useState("");
   const [cepInfo, setCepInfo] = useState({
-    bairro:{
+    bairro: {
       texto: '',
       editable: false
     },
@@ -19,12 +19,16 @@ export function Home() {
       texto: '',
       editable: false
     },
+    estado: {
+      texto: '',
+      editable: false
+    },
     uf: {
       texto: '',
       editable: false
     }
   });
-  
+
   const [alertLength, setAlertLength] = useState("");
 
   //Hooks - effects
@@ -33,7 +37,7 @@ export function Home() {
   function limpa_formulário_cep() {
     //Limpa valores do formulário de cep.
     setCepInfo({
-      bairro:{
+      bairro: {
         texto: '',
         editable: false
       },
@@ -42,6 +46,10 @@ export function Home() {
         editable: false
       },
       localidade: {
+        texto: '',
+        editable: false
+      },
+      estado: {
         texto: '',
         editable: false
       },
@@ -69,7 +77,7 @@ export function Home() {
         setAlertLength("")
         //Preenche os campos com "..." enquanto consulta webservice.
         setCepInfo({
-          bairro:{
+          bairro: {
             texto: '...',
             editable: false
           },
@@ -81,6 +89,10 @@ export function Home() {
             texto: '...',
             editable: false
           },
+          estado: {
+            texto: '...',
+            editable: false
+          },
           uf: {
             texto: '...',
             editable: false
@@ -89,14 +101,14 @@ export function Home() {
 
         try {
           const response = await Api.get(`/${cep}/json/`)
-          
+
           //Percorre o objeto cepInfo obtendo chave e valor de cada item contido no objeto
           Object.entries(cepInfo).forEach(([key, value]) => {
             //Procura dentro do objeto retornado pela responde.data se existe um algum valor igual a key do objeto cepInfo se tiver ele retorna
             const elementoEncontrado = Object.entries(response.data).find(([keyApi, valueApi]) => {
-              if(key==keyApi){
+              if (key == keyApi) {
                 return [keyApi, valueApi];
-              }          
+              }
             });
             //Verfica se elemento é igual a key e se o valor é diferente de vazio se sim ele passa o valor para oobjeto cepInfo
             if (elementoEncontrado[0] == key && elementoEncontrado[1] != "") {
@@ -107,14 +119,14 @@ export function Home() {
                   texto: elementoEncontrado[1]
                 }
               }));
-            }else{
+            } else {
               //Habilita o editar em um campo caso a api via cep não traga nenhum valor para o campo.
               setCepInfo(prevState => ({
                 ...prevState,
                 [key]: {
                   ...prevState[key],
                   texto: elementoEncontrado[1],
-                  editable:true
+                  editable: true
                 }
               }));
             }
@@ -266,23 +278,44 @@ export function Home() {
             }));
           }}
         />
-        <BoxInput
-          textLabel="UF"
-          placeholder="UF..."
-          fieldValue={cepInfo.uf.texto}
-          editable={cepInfo.uf.editable}
-          maxLength={50}
-          minLength={0}
-          onChangeText={(fieldValue) => {
-            setCepInfo(prevState => ({
-              ...prevState,
-              uf: {
-                ...prevState.uf,
-                texto: fieldValue
-              }
-            }));
-          }}
-        />
+        <BoxsContainer>
+          <BoxInput
+            textLabel="Estado"
+            placeholder="Estado..."
+            fieldValue={cepInfo.estado.texto}
+            editable={cepInfo.estado.editable}
+            maxLength={50}
+            minLength={0}
+            fieldWidth={70}
+            onChangeText={(fieldValue) => {
+              setCepInfo(prevState => ({
+                ...prevState,
+                estado: {
+                  ...prevState.estado,
+                  texto: fieldValue
+                }
+              }));
+            }}
+          />
+          <BoxInput
+            textLabel="UF"
+            placeholder="UF..."
+            fieldValue={cepInfo.uf.texto}
+            editable={cepInfo.uf.editable}
+            maxLength={50}
+            minLength={0}
+            fieldWidth={25}
+            onChangeText={(fieldValue) => {
+              setCepInfo(prevState => ({
+                ...prevState,
+                uf: {
+                  ...prevState.uf,
+                  texto: fieldValue
+                }
+              }));
+            }}
+          />
+        </BoxsContainer>
       </ContainerForm>
     </ScrollForm>
   );
