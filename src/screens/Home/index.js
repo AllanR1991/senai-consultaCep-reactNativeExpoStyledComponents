@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BoxInput } from "../../components/BoxInput";
 import { BoxsContainer, ContainerForm, ScrollForm } from "./style";
 import Api from "../../services/api"
+import axios from "axios";
 
 export function Home() {
   //Hooks - states
@@ -19,15 +20,15 @@ export function Home() {
       texto: '',
       editable: false
     },
-    estado: {
-      texto: '',
-      editable: false
-    },
     uf: {
       texto: '',
       editable: false
     }
   });
+  const [estado, setEstado] = useState({
+    texto: '',
+    editable: false
+  })
 
   const [alertLength, setAlertLength] = useState("");
 
@@ -49,14 +50,15 @@ export function Home() {
         texto: '',
         editable: false
       },
-      estado: {
-        texto: '',
-        editable: false
-      },
       uf: {
         texto: '',
         editable: false
       }
+    })
+
+    setEstado({
+      texto: '',
+      editable: false
     })
   }
 
@@ -89,22 +91,23 @@ export function Home() {
             texto: '...',
             editable: false
           },
-          estado: {
-            texto: '...',
-            editable: false
-          },
           uf: {
             texto: '...',
             editable: false
           }
         })
 
+        setEstado({
+          texto: '...',
+          editable: false
+        })
+
         try {
           const response = await Api.get(`/${cep}/json/`)
-
+          
           //Percorre o objeto cepInfo obtendo chave e valor de cada item contido no objeto
           Object.entries(cepInfo).forEach(([key, value]) => {
-            //Procura dentro do objeto retornado pela responde.data se existe um algum valor igual a key do objeto cepInfo se tiver ele retorna
+            //Procura dentro do objeto retornado pela responde.data se existe um algum valor igual a key do objeto cepInfo se tiver ele retorna            
             const elementoEncontrado = Object.entries(response.data).find(([keyApi, valueApi]) => {
               if (key == keyApi) {
                 return [keyApi, valueApi];
@@ -112,6 +115,7 @@ export function Home() {
             });
             //Verfica se elemento é igual a key e se o valor é diferente de vazio se sim ele passa o valor para oobjeto cepInfo
             if (elementoEncontrado[0] == key && elementoEncontrado[1] != "") {
+              console.log(key, elementoEncontrado[1]);
               setCepInfo(prevState => ({
                 ...prevState,
                 [key]: {
@@ -119,6 +123,11 @@ export function Home() {
                   texto: elementoEncontrado[1]
                 }
               }));
+              if(key == 'uf'){
+                console.log('key == uf',key,elementoEncontrado[1])
+                buscaEstado(elementoEncontrado[1])
+              }
+            
             } else {
               //Habilita o editar em um campo caso a api via cep não traga nenhum valor para o campo.
               setCepInfo(prevState => ({
@@ -130,10 +139,11 @@ export function Home() {
                 }
               }));
             }
-          })
+          })                 
         } catch (error) {
           alert(`Cep não encontrado`);
         }
+        
       } //end if.
       else {
         //cep é inválido.
@@ -146,6 +156,23 @@ export function Home() {
       limpa_formulário_cep();
     }
   };
+
+  async function buscaEstado(ufEstado){
+    
+    try {
+      const resposta = await axios.get(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${ufEstado}`)
+      
+      const ufCompleto =  resposta.data.nome
+      
+      setEstado(prevState =>  ({
+        ...prevState,
+        texto: ufCompleto
+        }))
+
+    } catch (error) {
+      console.log("Erro ao buscar uf")
+    }
+  }
 
   // useEffect(() => {
   //   console.log("UseEffects =", cepInfo);
@@ -282,19 +309,16 @@ export function Home() {
           <BoxInput
             textLabel="Estado"
             placeholder="Estado..."
-            fieldValue={cepInfo.estado.texto}
-            editable={cepInfo.estado.editable}
+            fieldValue={estado.texto}
+            editable={estado.editable}
             maxLength={50}
             minLength={0}
             fieldWidth={70}
             onChangeText={(fieldValue) => {
-              setCepInfo(prevState => ({
+              setEstado(prevState =>  ({
                 ...prevState,
-                estado: {
-                  ...prevState.estado,
-                  texto: fieldValue
-                }
-              }));
+                texto: fieldValue
+                }))
             }}
           />
           <BoxInput
@@ -312,7 +336,7 @@ export function Home() {
                   ...prevState.uf,
                   texto: fieldValue
                 }
-              }));
+              }));              
             }}
           />
         </BoxsContainer>
